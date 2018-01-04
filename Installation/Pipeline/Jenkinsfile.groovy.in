@@ -116,13 +116,13 @@ resultsDuration = [:]
 // -----------------------------------------------------------------------------
 
 // github proxy repository
-arangodbRepo = 'http://c1:8088/github.com/arangodb/arangodb'
+arangodbRepo = 'http://github-proxy.arangodb.biz:8088/github.com/arangodb/arangodb'
 
 // github repository for enterprise version
-enterpriseRepo = 'http://c1:8088/github.com/arangodb/enterprise'
+enterpriseRepo = 'http://github-proxy.arangodb.biz:8088/github.com/arangodb/enterprise'
 
 // github repository for the resilience tests
-resilienceRepo = 'http://c1:8088/github.com/arangodb/resilience-tests'
+resilienceRepo = 'http://github-proxy.arangodb.biz:8088/github.com/arangodb/resilience-tests'
 
 // Jenkins credentials for enterprise repositiory
 credentials = '8d893d23-6714-4f35-a239-c847c798e080'
@@ -747,7 +747,7 @@ def stashBuild(os, edition, maintainer) {
 
             sh "rm -f ${name}"
             sh "GZIP=-1 tar cpzf ${name} build"
-            sh "scp ${name} c1:/vol/cache/build-${branchLabel}-${os}-${edition}-${maintainer}.tar.gz"
+            sh "scp ${name} c1.arangodb.biz:/vol/cache/build-${branchLabel}-${os}-${edition}-${maintainer}.tar.gz"
             sh "rm -f ${name}"
         }
         else if (os == 'windows') {
@@ -755,7 +755,7 @@ def stashBuild(os, edition, maintainer) {
 
             bat "del /F /Q ${name}"
             powershell "7z a ${name} -r -bd -mx=1 build"
-            powershell "echo 'y' | pscp -i C:\\Users\\Jenkins\\.ssh\\putty-jenkins.ppk ${name} jenkins@c1:/vol/cache/build-${branchLabel}-${os}-${edition}-${maintainer}.zip"
+            powershell "echo 'y' | pscp -i C:\\Users\\Jenkins\\.ssh\\putty-jenkins.ppk ${name} jenkins@c1.arangodb.biz:/vol/cache/build-${branchLabel}-${os}-${edition}-${maintainer}.zip"
             bat "del /F /Q ${name}"
         }
     }
@@ -767,14 +767,14 @@ def unstashBuild(os, edition, maintainer) {
             if (os == "windows") {
                 def name = "build.zip"
 
-                powershell "echo 'y' | pscp -i C:\\Users\\Jenkins\\.ssh\\putty-jenkins.ppk jenkins@c1:/vol/cache/build-${branchLabel}-${os}-${edition}-${maintainer}.zip ${name}"
+                powershell "echo 'y' | pscp -i C:\\Users\\Jenkins\\.ssh\\putty-jenkins.ppk jenkins@c1.arangodb.biz:/vol/cache/build-${branchLabel}-${os}-${edition}-${maintainer}.zip ${name}"
                 powershell "Expand-Archive -Path ${name} -Force -DestinationPath ."
                 bat "del /F /Q ${name}"
             }
             else {
                 def name = "build.tar.gz"
 
-                sh "scp c1:/vol/cache/build-${branchLabel}-${os}-${edition}-${maintainer}.tar.gz ${name}"
+                sh "scp c1.arangodb.biz:/vol/cache/build-${branchLabel}-${os}-${edition}-${maintainer}.tar.gz ${name}"
                 sh "tar xpzf ${name}"
                 sh "rm -f ${name}"
             }
@@ -809,26 +809,26 @@ def stashBinaries(os, edition, maintainer) {
         // this is a super mega mess...scp will run as the system user and not as jenkins when run as a server
         // I couldn't figure out how to properly get it running for hours...so last resort was to install putty
 
-        powershell "echo 'y' | pscp -i C:\\Users\\Jenkins\\.ssh\\putty-jenkins.ppk stash.zip jenkins@c1:/vol/cache/binaries-${env.BUILD_TAG}-${os}-${edition}-${maintainer}.zip"
+        powershell "echo 'y' | pscp -i C:\\Users\\Jenkins\\.ssh\\putty-jenkins.ppk stash.zip jenkins@c1.arangodb.biz:/vol/cache/binaries-${env.BUILD_TAG}-${os}-${edition}-${maintainer}.zip"
     }
     else {
         paths << "build/bin/"
         paths << "build/tests/"
 
         sh "GZIP=-1 tar cpzf stash.tar.gz " + paths.join(" ")
-        sh "scp stash.tar.gz c1:/vol/cache/binaries-${env.BUILD_TAG}-${os}-${edition}-${maintainer}.tar.gz"
+        sh "scp stash.tar.gz c1.arangodb.biz:/vol/cache/binaries-${env.BUILD_TAG}-${os}-${edition}-${maintainer}.tar.gz"
     }
 }
 
 def unstashBinaries(os, edition, maintainer) {
     if (os == "windows") {
-        powershell "echo 'y' | pscp -i C:\\Users\\Jenkins\\.ssh\\putty-jenkins.ppk jenkins@c1:/vol/cache/binaries-${env.BUILD_TAG}-${os}-${edition}-${maintainer}.zip stash.zip"
+        powershell "echo 'y' | pscp -i C:\\Users\\Jenkins\\.ssh\\putty-jenkins.ppk jenkins@c1.arangodb.biz:/vol/cache/binaries-${env.BUILD_TAG}-${os}-${edition}-${maintainer}.zip stash.zip"
         powershell "Expand-Archive -Path stash.zip -Force -DestinationPath ."
         powershell "copy build\\tests\\RelWithDebInfo\\* build\\bin"
         powershell "copy build\\bin\\RelWithDebInfo\\* build\\bin"
     }
     else {
-        sh "scp c1:/vol/cache/binaries-${env.BUILD_TAG}-${os}-${edition}-${maintainer}.tar.gz stash.tar.gz"
+        sh "scp c1.arangodb.biz:/vol/cache/binaries-${env.BUILD_TAG}-${os}-${edition}-${maintainer}.tar.gz stash.tar.gz"
         sh "tar xpzf stash.tar.gz"
     }
 }
